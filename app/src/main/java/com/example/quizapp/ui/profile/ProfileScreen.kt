@@ -11,14 +11,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.quizapp.ui.auth.AuthViewModel
+import com.example.quizapp.ui.quiz.QuizViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onBack: () -> Unit,
     onLogout: () -> Unit,
-    viewModel: AuthViewModel = hiltViewModel()
+    // Olha eles aqui em cima, no lugar certinho!
+    viewModel: AuthViewModel = hiltViewModel(),
+    quizViewModel: QuizViewModel = hiltViewModel()
 ) {
+    // Pega o email do usuário logado usando o AuthViewModel
     val userEmail = viewModel.getCurrentUserEmail()
 
     Scaffold(
@@ -27,16 +31,20 @@ fun ProfileScreen(
                 title = { Text("Meu Perfil") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Voltar"
+                        )
                     }
                 }
             )
         }
-    ) { padding ->
+    ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(paddingValues)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -44,28 +52,26 @@ fun ProfileScreen(
             // Ícone grande de perfil
             Icon(
                 imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
+                contentDescription = "Foto de Perfil",
                 modifier = Modifier.size(120.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Logado como:",
-                style = MaterialTheme.typography.bodyLarge
-            )
+            // Email do usuário
             Text(
                 text = userEmail,
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.titleLarge
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
+            // Botão de Sair da Conta (Logout)
             Button(
                 onClick = {
                     viewModel.signOut() // Desloga do Firebase
-                    onLogout()          // Avisa a Main Activity para mudar de tela
+                    onLogout()          // Volta pra tela de Login
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error
@@ -73,6 +79,16 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Sair da Conta (Logout)")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Botão Temporário para enviar as questões para o Firebase
+            Button(
+                onClick = { quizViewModel.populateFirebaseDatabase() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Popular Banco de Dados no Firebase")
             }
         }
     }

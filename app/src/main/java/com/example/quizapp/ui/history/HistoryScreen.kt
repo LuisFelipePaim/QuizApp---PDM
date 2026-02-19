@@ -2,7 +2,10 @@ package com.example.quizapp.ui.history
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // Import essencial para o erro sumir
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -15,49 +18,75 @@ import com.example.quizapp.data.local.SubjectStat
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
+    onNavigateToProfile: () -> Unit,
+    onStartQuiz: () -> Unit,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
-    // Adicionei ": List<QuizResult>" para o Android Studio não se confundir
     val history: List<QuizResult> by viewModel.historyState.collectAsState()
     val stats: List<SubjectStat> by viewModel.statsState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(
-            text = "Meu Desempenho",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+    // Scaffold cria a estrutura de tela padrão do Android (Barra no topo e botão flutuante)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Meu Desempenho") },
+                actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Meu Perfil",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onStartQuiz,
+                icon = { Icon(Icons.Default.PlayArrow, contentDescription = "Jogar") },
+                text = { Text("Novo Quiz") }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            // 1. Dashboard (Estatísticas por Matéria)
+            if (stats.isNotEmpty()) {
+                Text(
+                    text = "Médias por Matéria",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                StatsCards(stats)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
-        // 1. Dashboard (Estatísticas por Matéria)
-        if (stats.isNotEmpty()) {
+            // 2. Histórico Detalhado
             Text(
-                text = "Médias por Matéria",
+                text = "Histórico de Partidas",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
-            StatsCards(stats)
-            Spacer(modifier = Modifier.height(24.dp))
-        }
 
-        // 2. Histórico Detalhado
-        Text(
-            text = "Histórico de Partidas",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        if (history.isEmpty()) {
-            Text(text = "Nenhum quiz realizado ainda.", modifier = Modifier.padding(top = 8.dp))
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 8.dp)
-            ) {
-                // Como dissemos que history é uma Lista, o 'items' vai funcionar perfeitamente
-                items(history) { result ->
-                    HistoryItem(result)
+            if (history.isEmpty()) {
+                Text(text = "Nenhum quiz realizado ainda.", modifier = Modifier.padding(top = 8.dp))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp) // Espaço para o botão não tampar a lista
+                ) {
+                    items(history) { result ->
+                        HistoryItem(result)
+                    }
                 }
             }
         }

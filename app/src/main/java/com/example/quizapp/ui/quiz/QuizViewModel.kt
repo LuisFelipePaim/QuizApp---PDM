@@ -3,6 +3,7 @@ package com.example.quizapp.ui.quiz
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quizapp.data.model.Question
+import com.example.quizapp.data.model.QuizDataSeeder
 import com.example.quizapp.data.model.QuizResult
 import com.example.quizapp.data.repository.QuizRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -127,6 +128,36 @@ class QuizViewModel @Inject constructor(
             )
             repository.seedDatabase(schoolQuestions)
             _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+    // Adicione isso no seu QuizViewModel.kt
+    fun populateFirebaseDatabase() {
+        viewModelScope.launch {
+            try {
+                // Pega todas as perguntas que criamos no arquivo Seeder
+                val allQuestions = QuizDataSeeder.getAllQuestions()
+
+                // Envia para o Firebase através do Repository
+                repository.seedDatabase(allQuestions)
+
+                println("Sucesso: Questões enviadas para o Firebase!")
+            } catch (e: Exception) {
+                println("Erro ao enviar questões: ${e.message}")
+            }
+        }
+    }
+    fun saveQuizResult(subject: String, score: Int, totalQuestions: Int, userEmail: String) {
+        viewModelScope.launch {
+            val result = com.example.quizapp.data.model.QuizResult(
+                id = 0, // <--- SÓ MUDAR PARA 0 AQUI!
+                userEmail = userEmail,
+                subject = subject,
+                score = score,
+                totalQuestions = totalQuestions,
+                dateTimestamp = System.currentTimeMillis()
+            )
+            // Salva no banco local (Room) e envia para o Firebase
+            repository.saveQuizResult(result)
         }
     }
 }

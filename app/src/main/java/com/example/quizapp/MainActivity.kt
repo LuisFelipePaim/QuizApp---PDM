@@ -13,10 +13,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.quizapp.ui.auth.LoginScreen
 import com.example.quizapp.ui.auth.SignUpScreen
 import com.example.quizapp.ui.history.HistoryScreen
+import com.example.quizapp.ui.profile.ProfileScreen
 import com.example.quizapp.ui.quiz.QuizScreen
 import dagger.hilt.android.AndroidEntryPoint
 
-// Essa anotação é OBRIGATÓRIA para o Hilt (Injeção de dependência) funcionar na Activity!
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,27 +27,22 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // AQUI ESTÁ A MÁGICA! O "GPS" do nosso aplicativo sendo ligado:
                     val navController = rememberNavController()
 
-                    // O NavHost é o mapa que diz quais rotas (telas) existem
                     NavHost(navController = navController, startDestination = "login") {
 
-                        // 1. Rota de Login
                         composable("login") {
                             LoginScreen(
                                 onNavigateToHome = {
-                                    // Vai para a tela principal e não deixa o usuário voltar pro login ao apertar o botão "Voltar"
                                     navController.navigate("history") {
                                         popUpTo("login") { inclusive = true }
                                     }
-                                }
-                                // Se a sua LoginScreen tiver um botão de "Criar Conta", descomente a linha abaixo:
-                                // , onNavigateToSignUp = { navController.navigate("signup") }
+                                },
+                                // ADICIONE ESTA LINHA ABAIXO:
+                                onNavigateToSignUp = { navController.navigate("signup") }
                             )
                         }
 
-                        // 2. Rota de Cadastro (SignUp)
                         composable("signup") {
                             SignUpScreen(
                                 onNavigateToLogin = { navController.popBackStack() },
@@ -59,24 +54,32 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // 3. Rota de Histórico / Dashboard
                         composable("history") {
-                            HistoryScreen()
-                            // No futuro, podemos colocar um botão aqui para iniciar o Quiz:
-                            // onStartQuiz = { navController.navigate("quiz") }
+                            HistoryScreen(
+                                onNavigateToProfile = { navController.navigate("profile") },
+                                onStartQuiz = { navController.navigate("quiz") }
+                            )
                         }
 
-                        // 4. Rota do Quiz
+                        composable("profile") {
+                            ProfileScreen(
+                                onBack = { navController.popBackStack() },
+                                onLogout = {
+                                    navController.navigate("login") {
+                                        popUpTo(0) // Limpa toda a pilha de telas ao deslogar
+                                    }
+                                }
+                            )
+                        }
+
                         composable("quiz") {
                             QuizScreen(
-                                subject = "Matemática", // Fixo por enquanto, o Estudante C pode deixar dinâmico depois
+                                subject = "Matemática", // Por enquanto, o quiz será de Matemática
                                 userEmail = "teste@teste.com",
                                 onNavigateToProfile = { navController.navigate("history") },
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }
-
-                        // NOTA: Se você tiver a ProfileScreen, pode adicionar um composable("profile") { ... } aqui!
                     }
                 }
             }

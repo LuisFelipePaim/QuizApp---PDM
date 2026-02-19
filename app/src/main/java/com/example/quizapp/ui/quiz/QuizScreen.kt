@@ -14,19 +14,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.quizapp.ui.auth.AuthViewModel // <-- IMPORT NOVO AQUI
 import com.example.quizapp.ui.quiz.QuizUiState
 import com.example.quizapp.ui.quiz.QuizViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuizScreen(
     subject: String,
-    userEmail: String,
+    userEmail: String, // Vamos ignorar esse e-mail falso que vem da MainActivity
     viewModel: QuizViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(), // <-- TRAZENDO O CÉREBRO DE AUTENTICAÇÃO
     onNavigateToProfile: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     // Observa o estado consolidado (MVVM Puro)
     val state by viewModel.uiState.collectAsState()
+
+    // PEGA O SEU E-MAIL VERDADEIRO DO BANCO DE DADOS
+    val realUserEmail = authViewModel.getCurrentUserEmail()
+
     // Carrega as questões ao entrar na tela (Requisito 2)
     LaunchedEffect(subject) {
         viewModel.loadQuestions(subject)
@@ -55,7 +62,8 @@ fun QuizScreen(
                         score = state.score,
                         total = state.questions.size,
                         onFinish = {
-                            viewModel.saveFinalResult(userEmail, subject) // Requisito 3.3
+                            // AGORA SALVAMOS COM O E-MAIL VERDADEIRO!
+                            viewModel.saveFinalResult(realUserEmail, subject)
                             onNavigateBack()
                         }
                     )
