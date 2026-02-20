@@ -40,8 +40,9 @@ class QuizRepository @Inject constructor(
 
     suspend fun saveQuizResult(result: QuizResult) {
         try {
-            quizResultDao.insertResult(result) // Local [cite: 29]
-            firestore.collection("results").add(result).await() // Nuvem [cite: 29]
+            quizResultDao.insertResult(result) // Local
+            // ALINHAMOS O NOME DA PASTA AQUI EMBAIXO! 👇
+            firestore.collection("quiz_results").add(result).await() // Nuvem
         } catch (e: Exception) {
             // Em um app real, aqui agendaríamos uma tarefa com WorkManager
             // para subir o resultado assim que a internet voltasse.
@@ -59,5 +60,31 @@ class QuizRepository @Inject constructor(
             batch.set(doc, q)
         }
         batch.commit().await()
+    }
+    // Adicione esta função dentro do seu QuizRepository
+    suspend fun getAllGlobalResults(): List<QuizResult> {
+        return try {
+            val snapshot = firestore.collection("quiz_results").get().await()
+
+            // Mapeamento manual para evitar o erro de construtor do Firebase
+            snapshot.documents.mapNotNull { doc ->
+                try {
+                    QuizResult(
+                        // Lemos cada campo diretamente do documento da nuvem
+                        id = doc.getLong("id")?.toInt() ?: 0,
+                        userEmail = doc.getString("userEmail") ?: "Desconhecido",
+                        subject = doc.getString("subject") ?: "",
+                        score = doc.getLong("score")?.toInt() ?: 0,
+                        totalQuestions = doc.getLong("totalQuestions")?.toInt() ?: 0,
+                        dateTimestamp = doc.getLong("dateTimestamp") ?: 0L
+                    )
+                } catch (e: Exception) {
+                    null // Se algum documento estiver mal formatado, ignora-o
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace() // Vai imprimir o erro no Logcat caso a internet falhe
+            emptyList()
+        }
     }
 }

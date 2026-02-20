@@ -54,10 +54,19 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        // Atualize a rota do history para receber a nova navegação
                         composable("history") {
                             HistoryScreen(
                                 onNavigateToProfile = { navController.navigate("profile") },
-                                onStartQuiz = { navController.navigate("quiz") }
+                                onStartQuiz = { navController.navigate("quiz") },
+                                onNavigateToRanking = { navController.navigate("ranking") } // <--- ADICIONE ISSO
+                            )
+                        }
+
+// ADICIONE A TELA DE RANKING AQUI
+                        composable("ranking") {
+                            com.example.quizapp.ui.ranking.RankingScreen(
+                                onNavigateBack = { navController.popBackStack() }
                             )
                         }
 

@@ -26,6 +26,8 @@ import com.example.quizapp.ui.history.HistoryViewModel;
 import com.example.quizapp.ui.history.HistoryViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.example.quizapp.ui.quiz.QuizViewModel;
 import com.example.quizapp.ui.quiz.QuizViewModel_HiltModules_KeyModule_ProvideFactory;
+import com.example.quizapp.ui.ranking.RankingViewModel;
+import com.example.quizapp.ui.ranking.RankingViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.firebase.auth.FirebaseAuth;
@@ -399,7 +401,7 @@ public final class DaggerQuizApplication_HiltComponents_SingletonC {
 
     @Override
     public Set<String> getViewModelKeys() {
-      return ImmutableSet.<String>of(AuthViewModel_HiltModules_KeyModule_ProvideFactory.provide(), HistoryViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuizViewModel_HiltModules_KeyModule_ProvideFactory.provide(), SignUpViewModel_HiltModules_KeyModule_ProvideFactory.provide());
+      return ImmutableSet.<String>of(AuthViewModel_HiltModules_KeyModule_ProvideFactory.provide(), HistoryViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuizViewModel_HiltModules_KeyModule_ProvideFactory.provide(), RankingViewModel_HiltModules_KeyModule_ProvideFactory.provide(), SignUpViewModel_HiltModules_KeyModule_ProvideFactory.provide());
     }
 
     @Override
@@ -431,6 +433,8 @@ public final class DaggerQuizApplication_HiltComponents_SingletonC {
 
     private Provider<QuizViewModel> quizViewModelProvider;
 
+    private Provider<RankingViewModel> rankingViewModelProvider;
+
     private Provider<SignUpViewModel> signUpViewModelProvider;
 
     private ViewModelCImpl(SingletonCImpl singletonCImpl,
@@ -457,12 +461,13 @@ public final class DaggerQuizApplication_HiltComponents_SingletonC {
       this.authViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 0);
       this.historyViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 1);
       this.quizViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
-      this.signUpViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
+      this.rankingViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
+      this.signUpViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 4);
     }
 
     @Override
     public Map<String, Provider<ViewModel>> getHiltViewModelMap() {
-      return ImmutableMap.<String, Provider<ViewModel>>of("com.example.quizapp.ui.auth.AuthViewModel", ((Provider) authViewModelProvider), "com.example.quizapp.ui.history.HistoryViewModel", ((Provider) historyViewModelProvider), "com.example.quizapp.ui.quiz.QuizViewModel", ((Provider) quizViewModelProvider), "com.example.quizapp.ui.auth.SignUpViewModel", ((Provider) signUpViewModelProvider));
+      return ImmutableMap.<String, Provider<ViewModel>>of("com.example.quizapp.ui.auth.AuthViewModel", ((Provider) authViewModelProvider), "com.example.quizapp.ui.history.HistoryViewModel", ((Provider) historyViewModelProvider), "com.example.quizapp.ui.quiz.QuizViewModel", ((Provider) quizViewModelProvider), "com.example.quizapp.ui.ranking.RankingViewModel", ((Provider) rankingViewModelProvider), "com.example.quizapp.ui.auth.SignUpViewModel", ((Provider) signUpViewModelProvider));
     }
 
     @Override
@@ -500,7 +505,10 @@ public final class DaggerQuizApplication_HiltComponents_SingletonC {
           case 2: // com.example.quizapp.ui.quiz.QuizViewModel 
           return (T) new QuizViewModel(viewModelCImpl.quizRepository());
 
-          case 3: // com.example.quizapp.ui.auth.SignUpViewModel 
+          case 3: // com.example.quizapp.ui.ranking.RankingViewModel 
+          return (T) new RankingViewModel(viewModelCImpl.quizRepository());
+
+          case 4: // com.example.quizapp.ui.auth.SignUpViewModel 
           return (T) new SignUpViewModel(viewModelCImpl.authRepository());
 
           default: throw new AssertionError(id);

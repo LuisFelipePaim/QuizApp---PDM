@@ -12,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.quizapp.data.model.QuizResult
 import com.example.quizapp.data.local.SubjectStat
@@ -23,17 +24,22 @@ import java.util.*
 fun HistoryScreen(
     onNavigateToProfile: () -> Unit,
     onStartQuiz: () -> Unit,
+    onNavigateToRanking: () -> Unit,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val history: List<QuizResult> by viewModel.historyState.collectAsState()
     val stats: List<SubjectStat> by viewModel.statsState.collectAsState()
 
-    // Scaffold cria a estrutura de tela padrão do Android (Barra no topo e botão flutuante)
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Meu Desempenho") },
                 actions = {
+                    // Botão do Ranking (Troféu)
+                    IconButton(onClick = onNavigateToRanking) {
+                        Text("🏆", fontSize = 24.sp)
+                    }
+                    // Botão do Perfil
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,

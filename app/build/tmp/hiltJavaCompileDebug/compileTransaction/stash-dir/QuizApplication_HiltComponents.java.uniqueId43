@@ -5,6 +5,7 @@ import com.example.quizapp.ui.auth.AuthViewModel_HiltModules;
 import com.example.quizapp.ui.auth.SignUpViewModel_HiltModules;
 import com.example.quizapp.ui.history.HistoryViewModel_HiltModules;
 import com.example.quizapp.ui.quiz.QuizViewModel_HiltModules;
+import com.example.quizapp.ui.ranking.RankingViewModel_HiltModules;
 import dagger.Binds;
 import dagger.Component;
 import dagger.Module;
@@ -154,6 +155,7 @@ public final class QuizApplication_HiltComponents {
           ActivityCBuilderModule.class,
           ViewModelCBuilderModule.class,
           QuizViewModel_HiltModules.KeyModule.class,
+          RankingViewModel_HiltModules.KeyModule.class,
           SignUpViewModel_HiltModules.KeyModule.class
       }
   )
@@ -194,6 +196,7 @@ public final class QuizApplication_HiltComponents {
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           HistoryViewModel_HiltModules.BindsModule.class,
           QuizViewModel_HiltModules.BindsModule.class,
+          RankingViewModel_HiltModules.BindsModule.class,
           SignUpViewModel_HiltModules.BindsModule.class
       }
   )

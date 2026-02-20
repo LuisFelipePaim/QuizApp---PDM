@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.quizapp.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -14,27 +15,25 @@ class SignUpViewModel @Inject constructor(
     private val repository: AuthRepository
 ) : ViewModel() {
 
-    // Única fonte de verdade para o estado da tela
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
-    val uiState = _uiState.asStateFlow()
+    val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    // Agora recebemos os dados diretamente da View (Tela)
-    fun onSignUpClick(email: String, password: String, name: String) {
-        if (password.length < 6) {
-            _uiState.value = AuthUiState.Error("A senha deve ter pelo menos 6 caracteres")
-            return
-        }
-
+    fun onSignUpClick(email: String, pass: String, name: String) {
         viewModelScope.launch {
+            // 1. Liga a rodinha de carregamento
             _uiState.value = AuthUiState.Loading
 
-            // Chama o repositório passando as variáveis corretas
-            val result = repository.signUp(email = email, pass = password, name = name)
+            // 2. Chama o repositório e guarda a resposta (Result)
+            val resultado = repository.signUp(email, pass, name)
 
-            if (result.isSuccess) {
+            // 3. Checa se o repositório disse que foi sucesso ou falha
+            if (resultado.isSuccess) {
+                // Sucesso! A tela vai navegar para o Login
                 _uiState.value = AuthUiState.Success
             } else {
-                _uiState.value = AuthUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao cadastrar")
+                // Falha! Desliga a rodinha e mostra o erro exato na tela
+                val erro = resultado.exceptionOrNull()
+                _uiState.value = AuthUiState.Error(erro?.localizedMessage ?: "Erro ao cadastrar. Verifique os dados.")
             }
         }
     }
