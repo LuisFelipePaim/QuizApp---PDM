@@ -7,9 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,17 +27,20 @@ fun HistoryScreen(
 ) {
     val history: List<QuizResult> by viewModel.historyState.collectAsState()
     val stats: List<SubjectStat> by viewModel.statsState.collectAsState()
+    val isLoading: Boolean by viewModel.isLoading.collectAsState() // Escuta o carregamento!
+
+    LaunchedEffect(Unit) {
+        viewModel.loadHistory()
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Meu Desempenho") },
                 actions = {
-                    // Botão do Ranking (Troféu)
                     IconButton(onClick = onNavigateToRanking) {
                         Text("🏆", fontSize = 24.sp)
                     }
-                    // Botão do Perfil
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
@@ -64,31 +65,40 @@ fun HistoryScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // 1. Dashboard (Estatísticas por Matéria)
-            if (stats.isNotEmpty()) {
+            // Se está carregando, mostra só a rodinha
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            // Se terminou de carregar e está vazio
+            else if (history.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Text("Nenhuma partida encontrada. Jogue um Quiz!")
+                }
+            }
+            // Se tem partidas, exibe tudo!
+            else {
+                if (stats.isNotEmpty()) {
+                    Text(
+                        text = "Médias por Matéria",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    StatsCards(stats)
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+
                 Text(
-                    text = "Médias por Matéria",
+                    text = "Histórico de Partidas",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                StatsCards(stats)
-                Spacer(modifier = Modifier.height(24.dp))
-            }
 
-            // 2. Histórico Detalhado
-            Text(
-                text = "Histórico de Partidas",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            if (history.isEmpty()) {
-                Text(text = "Nenhum quiz realizado ainda.", modifier = Modifier.padding(top = 8.dp))
-            } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp) // Espaço para o botão não tampar a lista
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
                 ) {
                     items(history) { result ->
                         HistoryItem(result)

@@ -87,4 +87,29 @@ class QuizRepository @Inject constructor(
             emptyList()
         }
     }
+    // Adicione esta função no final do seu QuizRepository.kt
+    suspend fun getUserHistoryFromFirebase(email: String): List<QuizResult> {
+        return try {
+            val snapshot = firestore.collection("quiz_results")
+                .whereEqualTo("userEmail", email) // Filtra apenas o e-mail do usuário logado!
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                try {
+                    QuizResult(
+                        id = doc.getLong("id")?.toInt() ?: 0,
+                        userEmail = doc.getString("userEmail") ?: "",
+                        subject = doc.getString("subject") ?: "",
+                        score = doc.getLong("score")?.toInt() ?: 0,
+                        totalQuestions = doc.getLong("totalQuestions")?.toInt() ?: 0,
+                        dateTimestamp = doc.getLong("dateTimestamp") ?: 0L
+                    )
+                } catch (e: Exception) { null }
+            }.sortedByDescending { it.dateTimestamp } // Ordena do mais recente para o mais antigo
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
 }

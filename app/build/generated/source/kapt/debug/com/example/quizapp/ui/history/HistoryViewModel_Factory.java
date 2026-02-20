@@ -19,28 +19,28 @@ import javax.inject.Provider;
     "KotlinInternalInJava"
 })
 public final class HistoryViewModel_Factory implements Factory<HistoryViewModel> {
-  private final Provider<QuizRepository> quizRepositoryProvider;
+  private final Provider<QuizRepository> repositoryProvider;
 
   private final Provider<AuthRepository> authRepositoryProvider;
 
-  public HistoryViewModel_Factory(Provider<QuizRepository> quizRepositoryProvider,
+  public HistoryViewModel_Factory(Provider<QuizRepository> repositoryProvider,
       Provider<AuthRepository> authRepositoryProvider) {
-    this.quizRepositoryProvider = quizRepositoryProvider;
+    this.repositoryProvider = repositoryProvider;
     this.authRepositoryProvider = authRepositoryProvider;
   }
 
   @Override
   public HistoryViewModel get() {
-    return newInstance(quizRepositoryProvider.get(), authRepositoryProvider.get());
+    return newInstance(repositoryProvider.get(), authRepositoryProvider.get());
   }
 
-  public static HistoryViewModel_Factory create(Provider<QuizRepository> quizRepositoryProvider,
+  public static HistoryViewModel_Factory create(Provider<QuizRepository> repositoryProvider,
       Provider<AuthRepository> authRepositoryProvider) {
-    return new HistoryViewModel_Factory(quizRepositoryProvider, authRepositoryProvider);
+    return new HistoryViewModel_Factory(repositoryProvider, authRepositoryProvider);
   }
 
-  public static HistoryViewModel newInstance(QuizRepository quizRepository,
+  public static HistoryViewModel newInstance(QuizRepository repository,
       AuthRepository authRepository) {
-    return new HistoryViewModel(quizRepository, authRepository);
+    return new HistoryViewModel(repository, authRepository);
   }
 }
