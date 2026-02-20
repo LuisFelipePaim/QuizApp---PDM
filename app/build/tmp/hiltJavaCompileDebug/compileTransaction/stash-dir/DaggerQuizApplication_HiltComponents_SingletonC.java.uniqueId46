@@ -448,7 +448,7 @@ public final class DaggerQuizApplication_HiltComponents_SingletonC {
     }
 
     private AuthRepository authRepository() {
-      return new AuthRepository(singletonCImpl.provideFirebaseAuthProvider.get(), singletonCImpl.provideFirestoreProvider.get());
+      return new AuthRepository(singletonCImpl.provideFirebaseAuthProvider.get(), singletonCImpl.provideFirestoreProvider.get(), ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
     }
 
     private QuizRepository quizRepository() {

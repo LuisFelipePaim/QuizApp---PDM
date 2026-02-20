@@ -63,7 +63,7 @@ fun QuizScreen(
                         total = state.questions.size,
                         onFinish = {
                             // AGORA SALVAMOS COM O E-MAIL VERDADEIRO!
-                            viewModel.saveFinalResult(realUserEmail, subject)
+                            viewModel.saveFinalResult(realUserEmail ?: "usuario_offline@teste.com", subject)
                             onNavigateBack()
                         }
                     )

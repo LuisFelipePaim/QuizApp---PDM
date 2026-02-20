@@ -61,7 +61,7 @@ fun LoginScreen(
             CircularProgressIndicator()
         } else {
             Button(
-                onClick = { viewModel.performLogin(email, password) },
+                onClick = { viewModel.onLoginClick(email, password) },
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 Text("Entrar")

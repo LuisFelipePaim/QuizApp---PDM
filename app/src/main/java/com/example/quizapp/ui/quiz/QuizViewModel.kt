@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 /**
  * Estado que representa a tela de Quiz.
- * Essencial para o Requisito 3 e 5 do PDF (Execução e Interface). [cite: 26, 32]
  */
 data class QuizUiState(
     val questions: List<Question> = emptyList(),
@@ -38,23 +38,35 @@ class QuizViewModel @Inject constructor(
 
     /**
      * Carrega as questões filtradas por matéria.
-     * Implementa a lógica de sincronização offline/online (Requisito 2). [cite: 22, 24]
+     * VERSÃO BLINDADA: Com timeout e finally para não travar offline.
      */
     fun loadQuestions(subject: String) {
         viewModelScope.launch {
+            // 1. Liga a rodinha
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
             try {
-                val result = repository.getQuestionsBySubject(subject)
-                _uiState.update { it.copy(questions = result, isLoading = false) }
+                // 2. Tenta buscar da nuvem/local com limite de 3 segundos
+                val result = withTimeoutOrNull(3000L) {
+                    repository.getQuestionsBySubject(subject)
+                }
+
+                // Se o resultado for nulo (timeout), usa lista vazia para não quebrar
+                val finalQuestions = result ?: emptyList()
+
+                _uiState.update { it.copy(questions = finalQuestions) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Erro ao carregar questões.") }
+                _uiState.update { it.copy(errorMessage = "Erro ao carregar questões.") }
+            } finally {
+                // ✨ A TRAVA DE SEGURANÇA ✨
+                // Aconteça o que acontecer, desliga a rodinha!
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
 
     /**
      * Processa a resposta do usuário e avança para a próxima pergunta.
-     * Controla o desempenho em tempo real (Requisito 3). [cite: 26, 28]
      */
     fun submitAnswer(selectedOptionIndex: Int) {
         val currentState = _uiState.value
@@ -64,7 +76,7 @@ class QuizViewModel @Inject constructor(
         val isCorrect = selectedOptionIndex == currentQuestion.correctOptionIndex
         val newScore = if (isCorrect) currentState.score + 1 else currentState.score
 
-        // Verifica se há mais perguntas (Limite de 10 conforme o repositório)
+        // Verifica se há mais perguntas
         if (currentState.currentQuestionIndex + 1 < currentState.questions.size) {
             _uiState.update {
                 it.copy(
@@ -73,18 +85,18 @@ class QuizViewModel @Inject constructor(
                 )
             }
         } else {
-            // Quiz finalizado (Requisito 3.2) [cite: 28]
+            // Quiz finalizado
             _uiState.update { it.copy(score = newScore, isFinished = true) }
         }
     }
 
     /**
      * Salva o resultado final localmente e na nuvem.
-     * Atende ao Requisito 3.3 do PDF.
      */
     fun saveFinalResult(userEmail: String, subject: String) {
         val state = _uiState.value
         val result = QuizResult(
+            id = 0,
             userEmail = userEmail,
             subject = subject,
             score = state.score,
@@ -96,7 +108,6 @@ class QuizViewModel @Inject constructor(
             try {
                 repository.saveQuizResult(result)
             } catch (e: Exception) {
-                // Em caso de erro na nuvem, o Repository já tratou o salvamento local
                 _uiState.update { it.copy(errorMessage = "Erro ao sincronizar com a nuvem.") }
             }
         }
@@ -104,7 +115,6 @@ class QuizViewModel @Inject constructor(
 
     /**
      * Popula o banco de dados (Requisito para testes iniciais).
-     * Delegado ao Repository para manter o MVVM Puro.
      */
     fun addSampleQuestions() {
         viewModelScope.launch {
@@ -124,40 +134,26 @@ class QuizViewModel @Inject constructor(
                     difficulty = "Médio",
                     subject = "Ciências"
                 )
-                // Adicionar as demais questões aqui...
             )
-            repository.seedDatabase(schoolQuestions)
-            _uiState.update { it.copy(isLoading = false) }
+            try {
+                repository.seedDatabase(schoolQuestions)
+            } catch (e: Exception) {
+                println("Erro: ${e.message}")
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
+            }
         }
     }
-    // Adicione isso no seu QuizViewModel.kt
+
     fun populateFirebaseDatabase() {
         viewModelScope.launch {
             try {
-                // Pega todas as perguntas que criamos no arquivo Seeder
                 val allQuestions = QuizDataSeeder.getAllQuestions()
-
-                // Envia para o Firebase através do Repository
                 repository.seedDatabase(allQuestions)
-
                 println("Sucesso: Questões enviadas para o Firebase!")
             } catch (e: Exception) {
                 println("Erro ao enviar questões: ${e.message}")
             }
-        }
-    }
-    fun saveQuizResult(subject: String, score: Int, totalQuestions: Int, userEmail: String) {
-        viewModelScope.launch {
-            val result = com.example.quizapp.data.model.QuizResult(
-                id = 0, // <--- SÓ MUDAR PARA 0 AQUI!
-                userEmail = userEmail,
-                subject = subject,
-                score = score,
-                totalQuestions = totalQuestions,
-                dateTimestamp = System.currentTimeMillis()
-            )
-            // Salva no banco local (Room) e envia para o Firebase
-            repository.saveQuizResult(result)
         }
     }
 }

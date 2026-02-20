@@ -22,9 +22,14 @@ fun ProfileScreen(
     viewModel: AuthViewModel = hiltViewModel(),
     quizViewModel: QuizViewModel = hiltViewModel()
 ) {
-    // Pega o email do usuário logado usando o AuthViewModel
-    val userEmail = viewModel.getCurrentUserEmail()
+    // Linha 26
+    val userEmail = viewModel.getCurrentUserEmail() ?: "E-mail não disponível"
 
+// No componente Text onde exibe o e-mail
+    Text(
+        text = userEmail, // Agora 'userEmail' é uma String segura (não nula)
+        style = MaterialTheme.typography.titleLarge
+    )// Pega o email do usuário logado usando o AuthViewModel
     Scaffold(
         topBar = {
             TopAppBar(
