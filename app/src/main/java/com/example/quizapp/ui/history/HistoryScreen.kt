@@ -1,19 +1,27 @@
 package com.example.quizapp.ui.history
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.quizapp.data.model.QuizResult
 import com.example.quizapp.data.local.SubjectStat
+import com.example.quizapp.data.model.QuizResult
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,125 +33,153 @@ fun HistoryScreen(
     onNavigateToRanking: () -> Unit,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
-    val history: List<QuizResult> by viewModel.historyState.collectAsState()
-    val stats: List<SubjectStat> by viewModel.statsState.collectAsState()
-    val isLoading: Boolean by viewModel.isLoading.collectAsState() // Escuta o carregamento!
+    val history by viewModel.historyState.collectAsState()
+    val stats by viewModel.statsState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadHistory()
-    }
+    // 🎨 DEGRADÊ DO FUNDO
+    val backgroundGradient = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3B82F6), Color(0xFF7C3AED))
+    )
 
+    // Estrutura principal da tela
     Scaffold(
+        containerColor = Color.Transparent, // Fundamental para o degradê aparecer!
         topBar = {
             TopAppBar(
-                title = { Text("Meu Desempenho") },
+                title = { Text("Meu Desempenho", color = Color.White, fontWeight = FontWeight.ExtraBold) },
                 actions = {
+                    // Ícone do Ranking (Dourado)
                     IconButton(onClick = onNavigateToRanking) {
-                        Text("🏆", fontSize = 24.sp)
+                        Icon(Icons.Filled.EmojiEvents, contentDescription = "Ranking", tint = Color(0xFFFFD700))
                     }
+                    // Ícone do Perfil
                     IconButton(onClick = onNavigateToProfile) {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Meu Perfil",
-                            modifier = Modifier.size(32.dp)
-                        )
+                        Icon(Icons.Filled.Person, contentDescription = "Perfil", tint = Color.White)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
         floatingActionButton = {
+            // Botão "Novo Quiz" chamativo flutuando no canto
             ExtendedFloatingActionButton(
                 onClick = onStartQuiz,
-                icon = { Icon(Icons.Default.PlayArrow, contentDescription = "Jogar") },
-                text = { Text("Novo Quiz") }
-            )
+                containerColor = Color(0xFFFF4B4B), // Rosa/Vermelho Vibrante
+                contentColor = Color.White,
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Novo Quiz", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
         }
-    ) { paddingValues ->
-        Column(
+    ) { padding ->
+        // Fundo com o degradê
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+                .background(backgroundGradient)
+                .padding(padding)
         ) {
-            // Se está carregando, mostra só a rodinha
             if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
-            // Se terminou de carregar e está vazio
-            else if (history.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                    Text("Nenhuma partida encontrada. Jogue um Quiz!")
-                }
-            }
-            // Se tem partidas, exibe tudo!
-            else {
-                if (stats.isNotEmpty()) {
-                    Text(
-                        text = "Médias por Matéria",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    StatsCards(stats)
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-
-                Text(
-                    text = "Histórico de Partidas",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.align(Alignment.Center))
+            } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    items(history) { result ->
-                        HistoryItem(result)
+
+                    // SEÇÃO 1: MÉDIAS POR MATÉRIA (Scroll Horizontal)
+                    if (stats.isNotEmpty()) {
+                        item {
+                            Text("Médias por Matéria", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                items(stats) { stat ->
+                                    StatCard(stat)
+                                }
+                            }
+                        }
                     }
+
+                    // SEÇÃO 2: HISTÓRICO COMPLETO DE PARTIDAS
+                    item {
+                        Text("Histórico de Partidas", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+
+                    items(history) { result ->
+                        HistoryItemCard(result)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    if (history.isEmpty() && !isLoading) {
+                        item {
+                            Text("Nenhum quiz encontrado. Comece a jogar!", color = Color.White.copy(alpha = 0.7f))
+                        }
+                    }
+
+                    // Espaço extra no final para o botão flutuante não tapar o último item
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
         }
     }
 }
 
+// 🃏 CARD DA MÉDIA (Quadrado Transparente)
 @Composable
-fun StatsCards(stats: List<SubjectStat>) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        stats.forEach { stat ->
-            Card(modifier = Modifier.weight(1f)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = stat.subject, style = MaterialTheme.typography.labelLarge)
-                    Text(
-                        text = "%.1f".format(stat.averageScore),
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                }
-            }
+fun StatCard(stat: SubjectStat) {
+    Card(
+        modifier = Modifier.width(140.dp).height(100.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(stat.subject, color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Formata a nota para ter apenas 1 casa decimal (ex: 9.0)
+            val formattedAvg = String.format(Locale.US, "%.1f", stat.averageScore)
+            Text(formattedAvg, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp)
         }
     }
 }
 
+// 🃏 CARD DA PARTIDA INDIVIDUAL (Retângulo Transparente)
 @Composable
-fun HistoryItem(result: QuizResult) {
-    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = result.subject, style = MaterialTheme.typography.titleSmall)
-                Text(
-                    text = "${result.score}/${result.totalQuestions}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+fun HistoryItemCard(result: QuizResult) {
+    val date = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(result.dateTimestamp))
+
+    // Regra visual: Verde se acertou metade ou mais, Vermelho claro se reprovou
+    val isApproved = result.score >= (result.totalQuestions / 2.0)
+    val scoreColor = if (isApproved) Color(0xFF4CAF50) else Color(0xFFFF8A80)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.1f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(result.subject, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(date, color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
             }
+
             Text(
-                text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(result.dateTimestamp)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = "${result.score}/${result.totalQuestions}",
+                color = scoreColor,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp
             )
         }
     }

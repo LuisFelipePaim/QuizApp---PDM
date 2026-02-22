@@ -4,9 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.quizapp.data.model.QuizResult
-import com.example.quizapp.ui.history.HistoryViewModel // Importando seu ViewModel de histórico
+import com.example.quizapp.ui.history.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,12 +30,20 @@ data class SubjectItem(val name: String, val color: Color, val icon: ImageVector
 fun SubjectScreen(
     onNavigateToQuiz: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToAllSubjects: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onNavigateToRanking: () -> Unit,
+    onNavigateToDashboard: () -> Unit, // NOVO: Rota para o Dashboard!
     historyViewModel: HistoryViewModel = hiltViewModel()
 ) {
-    // Pegando os dados do ViewModel que acabamos de ajustar
     val history by historyViewModel.results.collectAsState()
 
-    val subjects = listOf(
+    // Atualiza o histórico sempre que a tela é aberta
+    LaunchedEffect(Unit) {
+        historyViewModel.loadHistory()
+    }
+
+    val allSubjects = listOf(
         SubjectItem("Matemática", Color(0xFFFFB300), Icons.Default.Calculate),
         SubjectItem("História", Color(0xFFE91E63), Icons.Default.HistoryEdu),
         SubjectItem("Geografia", Color(0xFF4CAF50), Icons.Default.Public),
@@ -47,59 +52,84 @@ fun SubjectScreen(
         SubjectItem("Química", Color(0xFFFF5722), Icons.Default.Science)
     )
 
+    // Sorteia 3 matérias aleatórias
+    val randomSubjects = remember { allSubjects.shuffled().take(3) }
+
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF3B82F6), Color(0xFF7C3AED))
     )
 
     Box(modifier = Modifier.fillMaxSize().background(backgroundGradient)) {
-        // Usamos uma LazyColumn principal para a tela toda ser rolável
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                Text(
-                    text = "QUIZ MASTER",
-                    color = Color.White,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.padding(top = 24.dp)
-                )
-            }
 
-            // SEÇÃO: MATÉRIAS (Grid dentro da Column)
+            // CABEÇALHO COM TÍTULO E ÍCONES
             item {
-                Text("Escolha uma Matéria", color = Color.White, fontWeight = FontWeight.Bold)
-                // Criamos um grid manual simples para caber na lista
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    subjects.chunked(2).forEach { pair ->
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            pair.forEach { subject ->
-                                Box(modifier = Modifier.weight(1f)) {
-                                    SubjectCard(subject) { onNavigateToQuiz(subject.name) }
-                                }
-                            }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "QUIZ MASTER",
+                        color = Color.White,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+
+                    // 🚀 Ícones agrupados: Dashboard, Ranking e Perfil
+                    Row {
+                        IconButton(onClick = onNavigateToDashboard) {
+                            Icon(Icons.Filled.Dashboard, contentDescription = "Painel", tint = Color.White)
+                        }
+                        IconButton(onClick = onNavigateToRanking) {
+                            Icon(Icons.Filled.EmojiEvents, contentDescription = "Ranking", tint = Color(0xFFFFD700))
+                        }
+                        IconButton(onClick = onNavigateToProfile) {
+                            Icon(Icons.Filled.Person, contentDescription = "Perfil", tint = Color.White)
                         }
                     }
                 }
             }
 
-            // SEÇÃO: ATIVIDADE RECENTE (TOP 5)
+            // SEÇÃO: MATÉRIAS ALEATÓRIAS
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Atividade Recente", color = Color.White, fontWeight = FontWeight.Bold)
-                    TextButton(onClick = onNavigateToHistory) {
-                        Text("Ver Tudo", color = Color.White.copy(alpha = 0.7f))
+                    Text("Matérias em Destaque", color = Color.White, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = onNavigateToAllSubjects) {
+                        Text("Ver Todas", color = Color.White.copy(alpha = 0.7f))
                     }
                 }
             }
 
-            // Mostra apenas os 5 primeiros
-            items(history.take(5)) { result ->
+            items(randomSubjects) { subject ->
+                SubjectCard(subject) { onNavigateToQuiz(subject.name) }
+            }
+
+            // SEÇÃO: ATIVIDADE RECENTE
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Últimos Quizzes", color = Color.White, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = onNavigateToHistory) {
+                        Text("Ver Histórico", color = Color.White.copy(alpha = 0.7f))
+                    }
+                }
+            }
+
+            items(history.take(3)) { result ->
                 RecentActivityCard(result)
             }
 
@@ -116,21 +146,19 @@ fun SubjectScreen(
 fun SubjectCard(subject: SubjectItem, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .padding(6.dp)
             .fillMaxWidth()
-            .height(100.dp)
+            .height(80.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(subject.icon, contentDescription = null, tint = subject.color, modifier = Modifier.size(28.dp))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(subject.name, color = Color.White, fontWeight = FontWeight.Bold)
+            Icon(subject.icon, contentDescription = null, tint = subject.color, modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(subject.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
     }
 }
@@ -138,7 +166,6 @@ fun SubjectCard(subject: SubjectItem, onClick: () -> Unit) {
 @Composable
 fun RecentActivityCard(result: QuizResult) {
     val date = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(result.dateTimestamp))
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),

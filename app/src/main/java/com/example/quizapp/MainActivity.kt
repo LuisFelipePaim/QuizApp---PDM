@@ -7,14 +7,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.quizapp.ui.auth.LoginScreen
 import com.example.quizapp.ui.auth.SignUpScreen
 import com.example.quizapp.ui.history.HistoryScreen
 import com.example.quizapp.ui.profile.ProfileScreen
 import com.example.quizapp.ui.quiz.QuizScreen
+import com.example.quizapp.ui.quiz.SubjectScreen
+import com.example.quizapp.ui.quiz.AllSubjectsScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -34,11 +38,11 @@ class MainActivity : ComponentActivity() {
                         composable("login") {
                             LoginScreen(
                                 onNavigateToHome = {
-                                    navController.navigate("history") {
+                                    // 1. Após o login, vai para a HOME (SubjectScreen)
+                                    navController.navigate("home") {
                                         popUpTo("login") { inclusive = true }
                                     }
                                 },
-                                // ADICIONE ESTA LINHA ABAIXO:
                                 onNavigateToSignUp = { navController.navigate("signup") }
                             )
                         }
@@ -54,16 +58,41 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // Atualize a rota do history para receber a nova navegação
-                        composable("history") {
-                            HistoryScreen(
+                        // 2. NOVA TELA HOME (Sorteio de 3 matérias e Top 5 Histórico)
+                        composable("home") {
+                            SubjectScreen(
+                                onNavigateToQuiz = { subject -> navController.navigate("quiz/$subject") },
+                                onNavigateToHistory = { navController.navigate("history") },
+                                onNavigateToAllSubjects = { navController.navigate("all_subjects") },
                                 onNavigateToProfile = { navController.navigate("profile") },
-                                onStartQuiz = { navController.navigate("quiz") },
-                                onNavigateToRanking = { navController.navigate("ranking") } // <--- ADICIONE ISSO
+                                onNavigateToRanking = { navController.navigate("ranking") },
+                                // 🚀 ADICIONE ESTA LINHA AQUI!
+                                onNavigateToDashboard = { navController.navigate("dashboard") }
                             )
                         }
 
-// ADICIONE A TELA DE RANKING AQUI
+
+                        // 3. NOVA TELA COM TODAS AS MATÉRIAS
+                        composable("all_subjects") {
+                            AllSubjectsScreen(
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToQuiz = { subject -> navController.navigate("quiz/$subject") }
+                            )
+                        }
+
+                        composable("history") {
+                            HistoryScreen(
+                                onNavigateToProfile = { navController.navigate("profile") },
+                                onStartQuiz = {
+                                    // Volta para a home para o utilizador escolher uma matéria
+                                    navController.navigate("home") {
+                                        popUpTo("home") { inclusive = true }
+                                    }
+                                },
+                                onNavigateToRanking = { navController.navigate("ranking") }
+                            )
+                        }
+
                         composable("ranking") {
                             com.example.quizapp.ui.ranking.RankingScreen(
                                 onNavigateBack = { navController.popBackStack() }
@@ -81,11 +110,28 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        composable("quiz") {
+                        // 4. ROTA DO QUIZ ATUALIZADA (Agora recebe a matéria escolhida)
+                        composable(
+                            route = "quiz/{subject}",
+                            arguments = listOf(navArgument("subject") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val subject = backStackEntry.arguments?.getString("subject") ?: "Matemática"
+
                             QuizScreen(
-                                subject = "Matemática", // Por enquanto, o quiz será de Matemática
-                                userEmail = "teste@teste.com",
-                                onNavigateToProfile = { navController.navigate("history") },
+                                subject = subject,
+                                userEmail = "", // O e-mail agora é gerido no ViewModel, não precisa passar por aqui
+                                onNavigateToProfile = {
+                                    // Após finalizar o quiz, vamos mostrar o histórico
+                                    navController.navigate("history") {
+                                        popUpTo("home")
+                                    }
+                                },
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("dashboard") {
+                            com.example.quizapp.ui.profile.DashboardScreen(
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }
