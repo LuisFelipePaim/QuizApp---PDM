@@ -77,7 +77,7 @@ public final class QuestionDao_Impl implements QuestionDao {
 
   @Override
   public Object insertQuestions(final List<Question> questions,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -91,12 +91,12 @@ public final class QuestionDao_Impl implements QuestionDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object getQuestionsBySubject(final String subject,
-      final Continuation<? super List<Question>> arg1) {
+      final Continuation<? super List<Question>> $completion) {
     final String _sql = "SELECT * FROM questions WHERE subject = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -164,11 +164,11 @@ public final class QuestionDao_Impl implements QuestionDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object getAllQuestions(final Continuation<? super List<Question>> arg0) {
+  public Object getAllQuestions(final Continuation<? super List<Question>> $completion) {
     final String _sql = "SELECT * FROM questions";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -230,7 +230,7 @@ public final class QuestionDao_Impl implements QuestionDao {
           _statement.release();
         }
       }
-    }, arg0);
+    }, $completion);
   }
 
   @NonNull

@@ -61,7 +61,8 @@ public final class QuizResultDao_Impl implements QuizResultDao {
   }
 
   @Override
-  public Object insertResult(final QuizResult result, final Continuation<? super Unit> arg1) {
+  public Object insertResult(final QuizResult result,
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -75,7 +76,7 @@ public final class QuizResultDao_Impl implements QuizResultDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override

@@ -4,8 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -135,7 +137,8 @@ fun QuizContent(state: QuizUiState, onAnswerSelected: (Int) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .verticalScroll(rememberScrollState()), // 🚀 AQUI ESTÁ A MÁGICA DO SCROLL!
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // BARRA DE PROGRESSO DOURADA
@@ -227,6 +230,9 @@ fun QuizContent(state: QuizUiState, onAnswerSelected: (Int) -> Unit) {
                 }
             }
         }
+
+        // 🚀 Espaço extra no final para a última opção não ficar colada na borda inferior ao fazer o scroll
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
